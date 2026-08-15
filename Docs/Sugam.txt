@@ -1,0 +1,6 @@
+Chat 1  → Android Foundation + App Shell       ← current
+Chat 2  → Patient Management
+Chat 3  → Appointment Management
+Chat 4  → Room Database / Persistence
+Chat 5  → Dashboard + Business Logic
+Chat 6  → Testing
