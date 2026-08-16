@@ -632,7 +632,10 @@ As of **2026-08-15**:
 - Required-field validation and user-facing error messages are implemented.
 - Empty states and UI polish for lists and summaries are implemented.
 - Dedicated Add/Edit Appointment screen with professional Cyan theme and dropdowns.
-- Shared ViewModel architecture for consistent state across appointment navigation.
+- Shared ViewModel architecture for consistent state across navigation.
+- Refined Patient List with search functionality and circular initials avatars.
+- Dedicated Add Patient screen.
+- Standard Material 3 icons for bottom navigation.
 - Builds and physical-device verification have been successful.
 
 Current high-level data flow:

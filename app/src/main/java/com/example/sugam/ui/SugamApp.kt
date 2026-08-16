@@ -26,6 +26,7 @@ import com.example.sugam.ui.screens.patient.PatientScreen
 import com.example.sugam.ui.screens.patient.PatientDetailsScreen
 import com.example.sugam.ui.screens.patient.PatientViewModel
 import com.example.sugam.ui.screens.patient.PatientViewModelFactory
+import com.example.sugam.ui.screens.patient.AddPatientScreen
 import com.example.sugam.ui.screens.appointment.AddAppointmentScreen
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
@@ -74,6 +75,13 @@ fun SugamApp(
             patientRepository,
             physioRepository,
             clinicSettingsRepository
+        )
+    )
+
+    val patientViewModel: PatientViewModel = viewModel(
+        factory = PatientViewModelFactory(
+            patientRepository,
+            appointmentRepository
         )
     )
 
@@ -145,20 +153,25 @@ fun SugamApp(
             }
 
             composable("patients") {
-                val application =
-                    LocalContext.current.applicationContext as SugamApplication
-
-                val patientViewModel: PatientViewModel = viewModel(
-                    factory = PatientViewModelFactory(
-                        patientRepository = application.patientRepository,
-                        appointmentRepository = application.appointmentRepository
-                    )
-                )
-
                 PatientScreen(
                     viewModel = patientViewModel,
                     onNavigateToDetails = { patientId ->
                         navController.navigate("patient_details/$patientId")
+                    },
+                    onAddPatient = {
+                        navController.navigate("add_patient")
+                    }
+                )
+            }
+
+            composable("add_patient") {
+                AddPatientScreen(
+                    viewModel = patientViewModel,
+                    onBack = {
+                        navController.popBackStack()
+                    },
+                    onSaveSuccess = {
+                        navController.popBackStack()
                     }
                 )
             }
@@ -170,16 +183,7 @@ fun SugamApp(
                 )
             ) { backStackEntry ->
                 val patientId = backStackEntry.arguments?.getLong("patientId") ?: 0L
-                val application =
-                    LocalContext.current.applicationContext as SugamApplication
-
-                val patientViewModel: PatientViewModel = viewModel(
-                    factory = PatientViewModelFactory(
-                        patientRepository = application.patientRepository,
-                        appointmentRepository = application.appointmentRepository
-                    )
-                )
-
+                
                 PatientDetailsScreen(
                     viewModel = patientViewModel,
                     patientId = patientId,

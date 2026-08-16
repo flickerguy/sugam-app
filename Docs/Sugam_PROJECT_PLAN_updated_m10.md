@@ -606,6 +606,9 @@ Focus on making the app look professional and modern.
 - Dropdown menus for selection fields.
 - FAB (Floating Action Button) for appointment creation.
 - Notes field support.
+- Refined **Patient List** with search bar and circular avatars.
+- Dedicated **Add Patient** screen.
+- Standard Material 3 icons for bottom navigation.
 
 ### Remaining
 
