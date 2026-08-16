@@ -16,6 +16,10 @@ class PatientRepository(
         patientDao.insertPatient(patient)
     }
 
+    fun getPatientById(patientId: Long): Flow<PatientEntity?> {
+        return patientDao.getPatientById(patientId)
+    }
+
     suspend fun deletePatient(patientId: Long) {
         patientDao.deletePatient(patientId)
     }

@@ -23,8 +23,11 @@ import com.example.sugam.ui.screens.DashboardScreen
 import com.example.sugam.ui.screens.PatientsScreen
 import com.example.sugam.ui.screens.SettingsScreen
 import com.example.sugam.ui.screens.patient.PatientScreen
+import com.example.sugam.ui.screens.patient.PatientDetailsScreen
 import com.example.sugam.ui.screens.patient.PatientViewModel
 import com.example.sugam.ui.screens.patient.PatientViewModelFactory
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.example.sugam.ui.screens.physio.PhysioScreen
 import com.example.sugam.data.repository.PatientRepository
 import com.example.sugam.ui.screens.appointment.AppointmentViewModel
@@ -124,7 +127,36 @@ fun SugamApp(
                 )
 
                 PatientScreen(
-                    viewModel = patientViewModel
+                    viewModel = patientViewModel,
+                    onNavigateToDetails = { patientId ->
+                        navController.navigate("patient_details/$patientId")
+                    }
+                )
+            }
+
+            composable(
+                route = "patient_details/{patientId}",
+                arguments = listOf(
+                    navArgument("patientId") { type = NavType.LongType }
+                )
+            ) { backStackEntry ->
+                val patientId = backStackEntry.arguments?.getLong("patientId") ?: 0L
+                val application =
+                    LocalContext.current.applicationContext as SugamApplication
+
+                val patientViewModel: PatientViewModel = viewModel(
+                    factory = PatientViewModelFactory(
+                        patientRepository = application.patientRepository,
+                        appointmentRepository = application.appointmentRepository
+                    )
+                )
+
+                PatientDetailsScreen(
+                    viewModel = patientViewModel,
+                    patientId = patientId,
+                    onBack = {
+                        navController.popBackStack()
+                    }
                 )
             }
 
