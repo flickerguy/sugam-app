@@ -47,9 +47,8 @@ fun PatientDetailsScreen(
             )
 
             if (history.isEmpty()) {
-                Text(
-                    text = "No appointments found.",
-                    style = MaterialTheme.typography.bodyMedium
+                com.example.sugam.ui.screens.EmptyState(
+                    message = "No appointments found."
                 )
             } else {
                 LazyColumn(

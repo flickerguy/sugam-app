@@ -170,9 +170,8 @@ fun DashboardScreen(
             )
 
             if (upcomingAppointments.value.isEmpty()) {
-                Text(
-                    text = "No upcoming appointments.",
-                    style = MaterialTheme.typography.bodyMedium
+                EmptyState(
+                    message = "No upcoming appointments."
                 )
             }
         }

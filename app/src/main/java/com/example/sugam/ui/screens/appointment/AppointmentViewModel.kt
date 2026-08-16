@@ -32,10 +32,18 @@ class AppointmentViewModel(
 
     val clinicSettings =
         clinicSettingsRepository.observeSettings()
+            .flatMapLatest { settings ->
+                if (settings == null) {
+                    // Provide a default fallback if the DB is empty
+                    kotlinx.coroutines.flow.flowOf(com.example.sugam.data.local.entity.ClinicSettingsEntity())
+                } else {
+                    kotlinx.coroutines.flow.flowOf(settings)
+                }
+            }
             .stateIn(
                 viewModelScope,
                 SharingStarted.WhileSubscribed(5_000),
-                null
+                com.example.sugam.data.local.entity.ClinicSettingsEntity()
             )
 
     private val _selectedPatientId = MutableStateFlow<Long?>(null)
@@ -46,8 +54,13 @@ class AppointmentViewModel(
         _selectedPatientId.value = patientId
     }
 
-    val physios: Flow<List<PhysioEntity>> =
+    val physios: StateFlow<List<PhysioEntity>> =
         physioRepository.getAllPhysios()
+            .stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(5_000),
+                emptyList()
+            )
 
     private val _selectedPhysioId = MutableStateFlow<Long?>(null)
 
@@ -73,6 +86,12 @@ class AppointmentViewModel(
     val selectedStartTime: StateFlow<String?> =
         _selectedStartTime
 
+    private val _notes = MutableStateFlow<String?>(null)
+    val notes: StateFlow<String?> = _notes
+
+    fun updateNotes(notes: String?) {
+        _notes.value = notes
+    }
 
     private val _saveMessage = MutableStateFlow<String?>(null)
     val saveMessage: StateFlow<String?> = _saveMessage
@@ -135,24 +154,68 @@ class AppointmentViewModel(
         _saveMessage.value = null
     }
 
-    fun saveAppointment() {
-        val patientId = _selectedPatientId.value ?: return
-        val physioId = _selectedPhysioId.value ?: return
-        val appointmentDate = _selectedAppointmentDate.value ?: return
-        val startTime = _selectedStartTime.value ?: return
+    private fun validateAppointment(): Boolean {
+        if (_selectedPatientId.value == null) {
+            _saveMessage.value = "Please select a patient."
+            return false
+        }
+        if (_selectedPhysioId.value == null) {
+            _saveMessage.value = "Please select a physio."
+            return false
+        }
+        if (_selectedAppointmentDate.value == null) {
+            _saveMessage.value = "Please select an appointment date."
+            return false
+        }
+        if (_selectedStartTime.value == null) {
+            _saveMessage.value = "Please select a start time."
+            return false
+        }
 
-        val durationMinutes =
-            clinicSettings.value?.appointmentDurationMinutes
-                ?: run {
-                    _saveMessage.value =
-                        "Clinic settings are still loading. Please try again."
-                    return
-                }
+        val physio = physios.value.find { it.id == _selectedPhysioId.value }
+        if (physio == null || !physio.active) {
+            _saveMessage.value = "The selected physio is currently inactive."
+            return false
+        }
+
+        val settings = clinicSettings.value
+
+        // Working hour validation
+        try {
+            val formatter = DateTimeFormatter.ofPattern("HH:mm")
+            val start = LocalTime.parse(_selectedStartTime.value!!, formatter)
+            
+            val duration = settings.appointmentDurationMinutes
+            val end = start.plusMinutes(duration.toLong())
+            
+            val workingStart = LocalTime.parse(settings.workingStartTime, formatter)
+            val workingEnd = LocalTime.parse(settings.workingEndTime, formatter)
+
+            if (start.isBefore(workingStart) || end.isAfter(workingEnd)) {
+                _saveMessage.value = "Appointment must be within working hours (${settings.workingStartTime} - ${settings.workingEndTime})."
+                return false
+            }
+        } catch (e: Exception) {
+            _saveMessage.value = "Invalid time format in settings or selection."
+            return false
+        }
+
+        return true
+    }
+
+    fun saveAppointment() {
+        if (!validateAppointment()) return
+
+        val patientId = _selectedPatientId.value!!
+        val physioId = _selectedPhysioId.value!!
+        val appointmentDate = _selectedAppointmentDate.value!!
+        val startTime = _selectedStartTime.value!!
+        val settings = clinicSettings.value
 
         val endTime =
             calculateEndTime(
                 startTime = startTime,
-                durationMinutes = durationMinutes
+                durationMinutes = settings.appointmentDurationMinutes
             ) ?: run {
                 _saveMessage.value = "Invalid appointment time."
                 return
@@ -182,7 +245,7 @@ class AppointmentViewModel(
                     startTime = startTime,
                     endTime = endTime,
                     status = "SCHEDULED",
-                    notes = null
+                    notes = _notes.value
                 )
             )
 
@@ -224,6 +287,17 @@ class AppointmentViewModel(
         selectPhysio(appointment.physioId)
         selectAppointmentDate(appointment.appointmentDate)
         selectStartTime(appointment.startTime)
+        updateNotes(appointment.notes)
+    }
+
+    fun resetForm() {
+        _editingAppointmentId.value = null
+        _selectedPatientId.value = null
+        _selectedPhysioId.value = null
+        _selectedAppointmentDate.value = null
+        _selectedStartTime.value = null
+        _notes.value = null
+        _saveMessage.value = null
     }
 
     fun cancelEditing() {
@@ -240,30 +314,18 @@ class AppointmentViewModel(
         val appointmentId = _editingAppointmentId.value
             ?: return
 
-        val patientId = _selectedPatientId.value
-            ?: return
+        if (!validateAppointment()) return
 
-        val physioId = _selectedPhysioId.value
-            ?: return
-
-        val appointmentDate = _selectedAppointmentDate.value
-            ?: return
-
-        val startTime = _selectedStartTime.value
-            ?: return
-
-        val durationMinutes =
-            clinicSettings.value?.appointmentDurationMinutes
-                ?: run {
-                    _saveMessage.value =
-                        "Clinic settings are still loading. Please try again."
-                    return
-                }
+        val patientId = _selectedPatientId.value!!
+        val physioId = _selectedPhysioId.value!!
+        val appointmentDate = _selectedAppointmentDate.value!!
+        val startTime = _selectedStartTime.value!!
+        val settings = clinicSettings.value
 
         val endTime =
             calculateEndTime(
                 startTime = startTime,
-                durationMinutes = durationMinutes
+                durationMinutes = settings.appointmentDurationMinutes
             ) ?: run {
                 _saveMessage.value = "Invalid appointment time."
                 return
@@ -294,7 +356,7 @@ class AppointmentViewModel(
                 startTime = startTime,
                 endTime = endTime,
                 status = editingAppointmentStatus,
-                notes = null
+                notes = _notes.value
             )
 
             _saveMessage.value =

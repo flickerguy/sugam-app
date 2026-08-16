@@ -37,11 +37,19 @@ import androidx.compose.material3.TimePickerDialog
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import com.example.sugam.data.local.entity.AppointmentEntity
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import com.example.sugam.ui.screens.CenteredScreenText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppointmentsScreen(
-    viewModel: AppointmentViewModel
+    viewModel: AppointmentViewModel,
+    onAddAppointment: () -> Unit,
+    onEditAppointment: (AppointmentEntity) -> Unit
 ) {
     val patients = viewModel.patients
         .collectAsState(initial = emptyList())
@@ -114,433 +122,77 @@ fun AppointmentsScreen(
             ?: "Unknown Physio"
     }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-
-        item {
-            Button(
-                onClick = {
-                    showViewDatePicker = true
-                },
-                modifier = Modifier.fillMaxWidth()
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onAddAppointment,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
-                Text(
-                    text = "Date: $viewDate"
-                )
+                Icon(Icons.Default.Add, contentDescription = "Add Appointment")
             }
         }
-
-        item {
-            Text(
-                text = "Appointments",
-                style = MaterialTheme.typography.titleLarge
-            )
-        }
-
-        if (appointments.isEmpty()) {
-            item {
-                Text(
-                    text = "No appointments found."
-                )
-            }
-        } else {
-            items(
-                items = appointments,
-                key = { it.id }
-            ) { appointment ->
-
-                AppointmentListCard(
-                    appointment = appointment,
-                    patientName = patientName(appointment.patientId),
-                    physioName = physioName(appointment.physioId),
-                    onCancel = {
-                        appointmentToCancel = appointment.id
-                    },
-                    onStatusChange = { status ->
-                        viewModel.updateAppointmentStatus(
-                            appointmentId = appointment.id,
-                            status = status
-                        )
-                    },
-                    onEdit = {
-                        viewModel.startEditingAppointment(appointment)
-                    }
-                )
-            }
-        }
-
-        item {
-            Text(
-                text = if (editingAppointmentId != null) {
-                    "Edit Appointment"
-                } else {
-                    "Create Appointment"
-                },
-                style = MaterialTheme.typography.headlineMedium
-            )
-        }
-
-        if (editingAppointmentId != null) {
-            item {
-                androidx.compose.material3.OutlinedButton(
-                    onClick = {
-                        viewModel.cancelEditing()
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Cancel Edit")
-                }
-            }
-        }
-
-        if (selectedPatientId != null) {
-            item {
-                Text(
-                    text = "Selected Patient ID: $selectedPatientId",
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            }
-        }
-
-        item {
-            Text(
-                text = "Select Patient",
-                style = MaterialTheme.typography.titleLarge
-            )
-        }
-
-        items(patients.value) { patient ->
-            PatientSelectionCard(
-                patient = patient,
-                selected = patient.id == selectedPatientId,
-                onSelect = {
-                    viewModel.selectPatient(patient.id)
-                }
-            )
-        }
-
-        item {
-            Text(
-                text = "Select Physio",
-                style = MaterialTheme.typography.titleLarge
-            )
-        }
-
-        items(physios.value) { physio ->
-            PhysioSelectionCard(
-                physio = physio,
-                selected = physio.id == selectedPhysioId,
-                onSelect = {
-                    viewModel.selectPhysio(physio.id)
-                }
-            )
-        }
-
-        item {
-            Text(
-                text = "Select Date",
-                style = MaterialTheme.typography.titleLarge
-            )
-        }
-
-        item {
-            Button(
-                onClick = {
-                    showDatePicker = true
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = selectedAppointmentDate
-                        ?: "Choose Appointment Date"
-                )
-            }
-        }
-
-        item {
-            Text(
-                text = "Select Time",
-                style = MaterialTheme.typography.titleLarge
-            )
-        }
-
-        item {
-            Button(
-                onClick = {
-                    showTimePicker = true
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = selectedStartTime
-                        ?: "Choose Start Time"
-                )
-            }
-        }
-
-        if (
-            selectedPatientId != null &&
-            selectedPhysioId != null &&
-            selectedAppointmentDate != null &&
-            selectedStartTime != null
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            item {
-                Text(
-                    text = "Appointment Summary",
-                    style = MaterialTheme.typography.titleLarge
-                )
-            }
-
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = "Patient: ${selectedPatient?.name ?: ""}"
-                        )
-
-                        Text(
-                            text = "Physio: ${selectedPhysio?.name ?: ""}"
-                        )
-
-                        Text(
-                            text = "Date: $selectedAppointmentDate"
-                        )
-
-                        Text(
-                            text = "Time: $selectedStartTime - $selectedEndTime"
-                        )
-                    }
-                }
-            }
-
 
             item {
                 Button(
                     onClick = {
-                        if (editingAppointmentId != null) {
-                            viewModel.updateExistingAppointment()
-                        } else {
-                            viewModel.saveAppointment()
-                        }
+                        showViewDatePicker = true
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        if (editingAppointmentId != null) {
-                            "Save Changes"
-                        } else {
-                            "Save Appointment"
+                        text = "Date: $viewDate"
+                    )
+                }
+            }
+
+            item {
+                Text(
+                    text = "Appointments",
+                    style = MaterialTheme.typography.titleLarge
+                )
+            }
+
+            if (appointments.isEmpty()) {
+                item {
+                    EmptyState(
+                        message = "No appointments found for $viewDate."
+                    )
+                }
+            } else {
+                items(
+                    items = appointments,
+                    key = { it.id }
+                ) { appointment ->
+
+                    AppointmentListCard(
+                        appointment = appointment,
+                        patientName = patientName(appointment.patientId),
+                        physioName = physioName(appointment.physioId),
+                        onCancel = {
+                            appointmentToCancel = appointment.id
+                        },
+                        onStatusChange = { status ->
+                            viewModel.updateAppointmentStatus(
+                                appointmentId = appointment.id,
+                                status = status
+                            )
+                        },
+                        onEdit = {
+                            onEditAppointment(appointment)
                         }
                     )
                 }
             }
         }
-
-
-    }
-
-    if (appointmentToCancel != null) {
-        AlertDialog(
-            onDismissRequest = {
-                appointmentToCancel = null
-            },
-            title = {
-                Text("Cancel Appointment")
-            },
-            text = {
-                Text(
-                    "Are you sure you want to cancel this appointment?"
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        appointmentToCancel?.let { id ->
-                            viewModel.cancelAppointment(id)
-                        }
-
-                        appointmentToCancel = null
-                    }
-                ) {
-                    Text("Cancel Appointment")
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        appointmentToCancel = null
-                    }
-                ) {
-                    Text("Keep Appointment")
-                }
-            }
-        )
-    }
-
-    if (showViewDatePicker) {
-
-        val viewDatePickerState = rememberDatePickerState()
-
-        DatePickerDialog(
-            onDismissRequest = {
-                showViewDatePicker = false
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewDatePickerState.selectedDateMillis?.let { millis ->
-
-                            val date = Instant
-                                .ofEpochMilli(millis)
-                                .atZone(ZoneId.of("UTC"))
-                                .toLocalDate()
-                                .format(DateTimeFormatter.ISO_LOCAL_DATE)
-
-                            viewModel.selectViewDate(date)
-                        }
-
-                        showViewDatePicker = false
-                    }
-                ) {
-                    Text("OK")
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        showViewDatePicker = false
-                    }
-                ) {
-                    Text("Cancel")
-                }
-            }
-        ) {
-            DatePicker(
-                state = viewDatePickerState
-            )
-        }
-    }
-
-    if (showDatePicker) {
-        val datePickerState = rememberDatePickerState()
-
-        DatePickerDialog(
-            onDismissRequest = {
-                showDatePicker = false
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        datePickerState.selectedDateMillis?.let { millis ->
-
-                            val date = Instant
-                                .ofEpochMilli(millis)
-                                .atZone(ZoneId.of("UTC"))
-                                .toLocalDate()
-                                .format(
-                                    DateTimeFormatter.ISO_LOCAL_DATE
-                                )
-
-                            viewModel.selectAppointmentDate(date)
-                        }
-
-                        showDatePicker = false
-                    }
-                ) {
-                    Text("OK")
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        showDatePicker = false
-                    }
-                ) {
-                    Text("Cancel")
-                }
-            }
-        ) {
-            DatePicker(
-                state = datePickerState
-            )
-        }
-    }
-
-    if (showTimePicker) {
-
-        val timePickerState = rememberTimePickerState(
-            initialHour = 9,
-            initialMinute = 0,
-            is24Hour = true
-        )
-
-        TimePickerDialog(
-            title = {
-                Text("Select Start Time")
-            },
-            onDismissRequest = {
-                showTimePicker = false
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val time = String.format(
-                            "%02d:%02d",
-                            timePickerState.hour,
-                            timePickerState.minute
-                        )
-
-                        viewModel.selectStartTime(time)
-
-                        showTimePicker = false
-                    }
-                ) {
-                    Text("OK")
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        showTimePicker = false
-                    }
-                ) {
-                    Text("Cancel")
-                }
-            }
-        ) {
-            TimePicker(
-                state = timePickerState
-            )
-        }
-    }
-
-    if (saveMessage != null) {
-        AlertDialog(
-            onDismissRequest = {
-                viewModel.clearSaveMessage()
-            },
-            text = {
-                Text(saveMessage!!)
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.clearSaveMessage()
-                    }
-                ) {
-                    Text("OK")
-                }
-            }
-        )
     }
 
 }
@@ -613,6 +265,14 @@ private fun PhysioSelectionCard(
                 Text(
                     text = it,
                     style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            if (!physio.active) {
+                Text(
+                    text = "DEACTIVATED",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.error
                 )
             }
 

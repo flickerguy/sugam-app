@@ -162,25 +162,33 @@ fun PhysioScreen(
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(physios) { physio ->
-                PhysioCard(
-                    physio = physio,
-                    onEdit = {
-                        editingPhysioId = physio.id
-                        name = physio.name
-                        phone = physio.phone.orEmpty()
-                        specialization = physio.specialization.orEmpty()
-                    },
-                    onDelete = {
-                        physioToDelete = physio
-                    },
-                    onToggleActive = {
-                        viewModel.setPhysioActive(
-                            physio,
-                            !physio.active
-                        )
-                    }
-                )
+            if (physios.isEmpty()) {
+                item {
+                    com.example.sugam.ui.screens.EmptyState(
+                        message = "No physiotherapists added yet."
+                    )
+                }
+            } else {
+                items(physios) { physio ->
+                    PhysioCard(
+                        physio = physio,
+                        onEdit = {
+                            editingPhysioId = physio.id
+                            name = physio.name
+                            phone = physio.phone.orEmpty()
+                            specialization = physio.specialization.orEmpty()
+                        },
+                        onDelete = {
+                            physioToDelete = physio
+                        },
+                        onToggleActive = {
+                            viewModel.setPhysioActive(
+                                physio,
+                                !physio.active
+                            )
+                        }
+                    )
+                }
             }
         }
 

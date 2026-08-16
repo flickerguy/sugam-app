@@ -74,3 +74,27 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
     }
 }
 
+val PREPOPULATE_CALLBACK = object : RoomDatabase.Callback() {
+    override fun onCreate(db: SupportSQLiteDatabase) {
+        super.onCreate(db)
+        db.execSQL(
+            """
+            INSERT INTO clinic_settings (
+                id,
+                clinicName,
+                workingStartTime,
+                workingEndTime,
+                appointmentDurationMinutes
+            )
+            VALUES (
+                1,
+                'Sugam Physiotherapy Clinic',
+                '09:00',
+                '19:00',
+                30
+            )
+            """.trimIndent()
+        )
+    }
+}
+

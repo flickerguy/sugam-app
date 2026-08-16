@@ -100,13 +100,21 @@ fun PatientScreen(
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(patients) { patient ->
-                PatientCard(
-                    patient = patient,
-                    onClick = {
-                        onNavigateToDetails(patient.id)
-                    }
-                )
+            if (patients.isEmpty()) {
+                item {
+                    com.example.sugam.ui.screens.EmptyState(
+                        message = "No patients added yet."
+                    )
+                }
+            } else {
+                items(patients) { patient ->
+                    PatientCard(
+                        patient = patient,
+                        onClick = {
+                            onNavigateToDetails(patient.id)
+                        }
+                    )
+                }
             }
         }
     }

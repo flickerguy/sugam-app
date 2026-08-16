@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.room.Room
 import com.example.sugam.data.local.AppDatabase
 import com.example.sugam.data.local.MIGRATION_3_4
+import com.example.sugam.data.local.PREPOPULATE_CALLBACK
 import com.example.sugam.data.repository.AppointmentRepository
 import com.example.sugam.data.repository.ClinicSettingsRepository
 import com.example.sugam.data.repository.PatientRepository
@@ -19,6 +20,7 @@ class SugamApplication : Application() {
         )
             .fallbackToDestructiveMigration(true)
             .addMigrations(MIGRATION_3_4)
+            .addCallback(PREPOPULATE_CALLBACK)
             .build()
     }
 
