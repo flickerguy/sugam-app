@@ -517,9 +517,14 @@ Cancelled appointments are excluded from conflict checks.
 
 **Status: COMPLETED**
 
-Implemented patient appointment history using the existing appointment data.
+Implemented a dedicated Patient Details and Appointment History flow.
 
-History includes appointment date/time, physio, status, and available appointment information. Historical appointments remain available even when the associated physio is inactive.
+- Navigation from Patient List to Patient Details.
+- Patient details display (Name, Phone, Age, etc.).
+- Comprehensive appointment history list.
+- Reactive data fetching using `StateFlow` and `flatMapLatest`.
+- Robust history query that handles deleted physios using `LEFT JOIN` and fallback names.
+- Verification on physical device successful.
 
 ## 17. Milestone 9 — Dashboard
 
@@ -708,8 +713,8 @@ and use:
 > - Room database version 4 is working.
 > - Patient Management basic flow is complete.
 > - Physio Management basic workflow is complete, including Add, List, Edit, Delete, and Activate/Deactivate.
-> - Appointment Management is complete, including create/view/status/cancel/edit and double-booking prevention.
-> - Patient Appointment History is complete.
+> - Appointment Management is complete, including create/view/status/cancel/edit, double-booking prevention, and a clean Cancel Edit action.
+> - Patient Appointment History is complete with a dedicated Patient Details screen and robust history query.
 > - Dashboard is complete for the current Phase 1 scope.
 > - Clinic Settings are complete and persisted using Room v4.
 > - Appointment duration is driven by Clinic Settings.

@@ -182,7 +182,10 @@ SQLite
 ### Patient
 
 ```text
-PatientScreen
+PatientListScreen
+       |
+       v
+PatientDetailsScreen
        |
        v
 PatientViewModel
@@ -529,7 +532,7 @@ The edit flow updates the existing appointment row and preserves its current sta
 
 ## 16A. Patient Appointment History
 
-Patient appointment history is implemented using the existing appointment data. Historical appointments remain stored even when a physio becomes inactive.
+Patient appointment history is implemented using a dedicated `PatientDetailsScreen`. Historical appointments remain stored and visible even when a physio record is deleted, using a `LEFT JOIN` and a fallback display name in the data query.
 
 Conceptual flow:
 
@@ -537,7 +540,10 @@ Conceptual flow:
 Patient
    |
    v
-Appointment history query
+PatientDetailsScreen
+   |
+   v
+Appointment history query (LEFT JOIN)
    |
    v
 AppointmentRepository
