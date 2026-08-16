@@ -1,18 +1,9 @@
 package com.example.sugam.ui.screens.patient
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,92 +19,89 @@ import com.example.sugam.data.local.entity.AppointmentEntity
 import com.example.sugam.data.local.model.PatientAppointmentHistory
 
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import com.example.sugam.ui.screens.EmptyState
+import androidx.compose.material.icons.automirrored.filled.Chat
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PatientScreen(
     viewModel: PatientViewModel,
-    onNavigateToDetails: (Long) -> Unit
+    onNavigateToDetails: (Long) -> Unit,
+    onAddPatient: () -> Unit
 ) {
-    val patients by viewModel.patients.collectAsState(initial = emptyList())
+    val patients by viewModel.patients.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
 
-    var name by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
-    var age by remember { mutableStateOf("") }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-
-        Text(
-            text = "Patients",
-            style = MaterialTheme.typography.headlineMedium
-        )
-
-        OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
-            label = { Text("Patient name") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = phone,
-            onValueChange = { phone = it },
-            label = { Text("Phone") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = age,
-            onValueChange = { age = it },
-            label = { Text("Age") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Button(
-            onClick = {
-                viewModel.addPatient(
-                    PatientEntity(
-                        name = name,
-                        phone = phone,
-                        age = age.toIntOrNull()
-                    )
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Patient List", color = Color.White) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary
                 )
-
-                name = ""
-                phone = ""
-                age = ""
-            },
-            enabled = name.isNotBlank() && phone.isNotBlank(),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Add Patient")
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onAddPatient,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = Color.White
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add Patient")
+            }
         }
-
-        Text(
-            text = "Saved Patients",
-            style = MaterialTheme.typography.titleLarge
-        )
-
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            if (patients.isEmpty()) {
-                item {
-                    com.example.sugam.ui.screens.EmptyState(
-                        message = "No patients added yet."
-                    )
-                }
-            } else {
-                items(patients) { patient ->
-                    PatientCard(
-                        patient = patient,
-                        onClick = {
-                            onNavigateToDetails(patient.id)
-                        }
-                    )
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { viewModel.updateSearchQuery(it) },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("Search patients...") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                shape = MaterialTheme.shapes.medium
+            )
+
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                if (patients.isEmpty()) {
+                    item {
+                        EmptyState(
+                            message = if (searchQuery.isBlank()) "No patients added yet." 
+                                      else "No patients found for '$searchQuery'."
+                        )
+                    }
+                } else {
+                    items(patients) { patient ->
+                        PatientCard(
+                            patient = patient,
+                            onClick = {
+                                onNavigateToDetails(patient.id)
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -128,29 +116,60 @@ private fun PatientCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column {
+            // Avatar
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = patient.name.take(1).uppercase(),
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleLarge
+                )
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = patient.name,
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                 )
 
                 Text(
-                    text = patient.phone,
-                    style = MaterialTheme.typography.bodyMedium
+                    text = "Mobile: ${patient.phone} [ ID : SUG${patient.id} ]",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray
                 )
+            }
 
-                patient.age?.let {
-                    Text(
-                        text = "Age: $it",
-                        style = MaterialTheme.typography.bodySmall
+            Row {
+                IconButton(onClick = { /* Call action */ }) {
+                    Icon(
+                        Icons.Default.Call,
+                        contentDescription = "Call",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+                IconButton(onClick = { /* WhatsApp action */ }) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.Chat,
+                        contentDescription = "WhatsApp",
+                        tint = Color(0xFF4CAF50)
                     )
                 }
             }

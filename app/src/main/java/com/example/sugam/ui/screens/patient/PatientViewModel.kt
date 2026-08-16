@@ -17,14 +17,35 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
+import kotlinx.coroutines.flow.combine
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class PatientViewModel(
     private val patientRepository: PatientRepository,
     private val appointmentRepository: AppointmentRepository
 ) : ViewModel() {
 
-    val patients: Flow<List<PatientEntity>> =
-        patientRepository.getAllPatients()
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery
+
+    val patients: StateFlow<List<PatientEntity>> =
+        combine(
+            patientRepository.getAllPatients(),
+            _searchQuery
+        ) { patients, query ->
+            if (query.isBlank()) {
+                patients
+            } else {
+                patients.filter {
+                    it.name.contains(query, ignoreCase = true) ||
+                            it.phone.contains(query)
+                }
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
 
     private val _selectedPatientId = MutableStateFlow<Long?>(null)
 
@@ -66,6 +87,10 @@ class PatientViewModel(
 
     fun setPatientId(patientId: Long?) {
         _selectedPatientId.value = patientId
+    }
+
+    fun updateSearchQuery(query: String) {
+        _searchQuery.value = query
     }
 
 }
