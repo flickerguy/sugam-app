@@ -1,0 +1,273 @@
+# Sugam — Continue Milestone 6 and Patient Appointment History
+
+You are now working as the coding assistant for my existing Android project **Sugam**, a physiotherapy clinic scheduler.
+
+## Important: inspect the existing project first
+
+Before making any changes:
+
+1. Inspect the existing Sugam source code.
+2. Read `Docs/Sugam_ARCHITECTURE_updated_m10.md`
+3. Read `Docs/Sugam_PROJECT_PLAN_updated_m10.md`.
+4. Determine the current implementation rather than assuming the code structure.
+5. Do not replace or rewrite working code unnecessarily.
+6. Do not change the Room database schema unless it is genuinely required.
+7. If a database/schema change is required, stop and explain the required migration before modifying it.
+
+`Docs/Sugam_ARCHITECTURE_updated_m10.md` and `Docs/Sugam_PROJECT_PLAN_updated_m10.md` are the project sources of truth.
+
+---
+
+## Current project status
+
+Sugam is a Phase 1 local Android application.
+
+Technology stack:
+
+* Kotlin
+* Jetpack Compose
+* Material 3
+* MVVM
+* Room / SQLite
+* Kotlin Coroutines
+* StateFlow / Flow
+* Navigation Compose
+* Gradle / Kotlin DSL
+
+The application is successfully running on a physical Android device.
+
+Current Room database version is **3**.
+
+Architecture:
+
+```text
+Compose UI
+    ↓
+ViewModel
+    ↓
+Repository
+    ↓
+Room
+    ↓
+SQLite
+```
+
+Important architectural rules:
+
+* UI must not access Room directly.
+* Repository is the persistence boundary.
+* Appointments reference `physioId`, not a physio name.
+* Multiple physios must be supported.
+* Historical appointments must remain valid even if a physio is deactivated.
+* Double-booking prevention must not depend only on UI validation.
+* Phase 1 remains local-only.
+* Do not introduce cloud/backend functionality.
+
+---
+
+# Completed functionality
+
+## Patient Management
+
+Basic Patient Management is complete.
+
+## Physio Management
+
+Physio Management is complete for the current Phase 1 workflow:
+
+* Add Physio
+* List Physios
+* Edit Physio
+* Cancel Edit
+* Delete Physio with confirmation
+* Activate Physio
+* Deactivate Physio
+* Room persistence
+* Reactive Flow-based UI
+
+## Appointment Management
+
+The following functionality is already working:
+
+* Create appointment
+* Select patient
+* Select physio
+* Select date
+* Select start time
+* Calculate appointment duration/end time
+* Save appointment
+* View appointments
+* Filter appointments by date
+* Resolve patient name from patient ID
+* Resolve physio name from physio ID
+* Prevent double booking
+* Cancel appointment
+* Confirm appointment
+* Complete appointment
+* Mark appointment as NO_SHOW
+* Edit/reschedule appointment
+* Preserve the existing appointment status when editing
+* Validate conflicts while editing
+* Exclude the appointment being edited from its own conflict check
+
+Appointment statuses are:
+
+```text
+SCHEDULED
+CONFIRMED
+COMPLETED
+CANCELLED
+NO_SHOW
+```
+
+Cancelled appointments remain in Room for history and do not block future bookings.
+
+---
+
+# CURRENT TASK — Finish Milestone 6
+
+The immediate remaining Appointment Management task is:
+
+```text
+Edit Appointment
+       |
+       +--> Cancel Edit
+       |      ↓
+       |   Discard changes
+       |      ↓
+       |   Return to normal/create appointment mode
+       |
+       +--> Save Changes
+              ↓
+          Validate
+              ↓
+          Update existing appointment
+```
+
+## Step 1 — Inspect current edit implementation
+
+Find the current appointment edit implementation.
+
+Determine:
+
+* How edit mode is represented.
+* Which state variables contain the edited patient, physio, date, start time, etc.
+* How the appointment form switches between create and edit mode.
+* How Save Changes currently works.
+* Whether a Cancel Edit action already exists partially.
+* How navigation/state reset currently works.
+
+Do not make changes yet.
+
+First explain briefly what you found.
+
+## Step 2 — Implement Cancel Edit
+
+Implement a clean Cancel Edit action that:
+
+* Discards all unsaved changes.
+* Does not modify the existing appointment.
+* Does not insert a new appointment.
+* Does not update Room.
+* Exits edit mode.
+* Returns the UI to the normal appointment creation/list state according to the existing application design.
+* Resets any edit-specific state correctly.
+
+Reuse the existing architecture and state model wherever possible.
+
+Do not redesign the appointment screen unless necessary.
+
+## Step 3 — Build and verify
+
+After implementing the change:
+
+1. Build the project.
+2. Fix any compile errors caused by your changes.
+3. Do not make unrelated changes.
+4. Explain what files were modified.
+5. Explain how Cancel Edit works.
+
+I will run the application on my physical device and verify the behavior.
+
+---
+
+# After Milestone 6 is verified
+
+Do NOT immediately start implementing Patient History.
+
+First tell me that Milestone 6 is ready for verification.
+
+Once I confirm that Appointment Management is working correctly, proceed to:
+
+# Milestone 8 — Patient Appointment History
+
+Required flow:
+
+```text
+Patients
+   ↓
+Select Patient
+   ↓
+Patient Details
+   ↓
+Appointment History
+```
+
+The history should show appointments belonging to that patient.
+
+At minimum display:
+
+* Date
+* Time
+* Physio
+* Status
+* Notes where appropriate
+
+Important business rule:
+
+Historical appointments must remain available even if the associated physio is later deactivated.
+
+The history should use the existing appointment data and IDs rather than duplicating patient/physio names into appointment records.
+
+Before implementing Patient History:
+
+1. Inspect the existing Patient implementation.
+2. Inspect `PatientEntity`.
+3. Inspect `AppointmentEntity`.
+4. Inspect `PatientDao`.
+5. Inspect `AppointmentDao`.
+6. Inspect the repositories.
+7. Inspect the existing Patient screen/navigation.
+8. Determine the smallest clean change needed to support appointment history.
+
+Do not change the Room schema unless required.
+
+If a schema change is required, explain why and identify the migration needed before making it.
+
+---
+
+# Development rules
+
+Follow these rules throughout the implementation:
+
+1. Work incrementally.
+2. Inspect existing code before changing it.
+3. Preserve working functionality.
+4. Do not rewrite entire files unnecessarily.
+5. Do not introduce unnecessary libraries.
+6. Do not introduce Hilt unless there is a specific architectural reason.
+7. Keep MVVM architecture.
+8. Keep Room behind repositories.
+9. Keep business validation outside the UI where appropriate.
+10. Do not introduce backend/cloud functionality.
+11. Do not modify unrelated features.
+12. Prefer small changes that are easy to review.
+13. After each meaningful change, build the project.
+14. Clearly explain compile errors and fixes.
+15. When uncertain about an existing design, ask me rather than making a large architectural assumption.
+
+## Most important instruction
+
+**Do not generate a complete replacement implementation based on assumptions. Inspect the current Sugam code and modify the existing implementation with the smallest appropriate changes.**
+
+Start by inspecting the project and tell me what you find about the current Appointment edit implementation.
