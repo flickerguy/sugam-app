@@ -26,6 +26,7 @@ import com.example.sugam.ui.screens.patient.PatientScreen
 import com.example.sugam.ui.screens.patient.PatientDetailsScreen
 import com.example.sugam.ui.screens.patient.PatientViewModel
 import com.example.sugam.ui.screens.patient.PatientViewModelFactory
+import com.example.sugam.ui.screens.appointment.AddAppointmentScreen
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.example.sugam.ui.screens.physio.PhysioScreen
@@ -34,17 +35,25 @@ import com.example.sugam.ui.screens.appointment.AppointmentViewModel
 import com.example.sugam.ui.screens.appointment.AppointmentViewModelFactory
 import com.example.sugam.ui.screens.settings.ClinicSettingsViewModel
 import com.example.sugam.ui.screens.settings.ClinicSettingsViewModelFactory
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.ui.graphics.vector.ImageVector
 
 private data class BottomNavItem(
     val route: String,
-    val label: String
+    val label: String,
+    val icon: ImageVector
 )
 
 private val bottomNavItems = listOf(
-    BottomNavItem("dashboard", "Dashboard"),
-    BottomNavItem("appointments", "Appointments"),
-    BottomNavItem("patients", "Patients"),
-    BottomNavItem("settings", "Settings")
+    BottomNavItem("dashboard", "Dashboard", Icons.Default.Dashboard),
+    BottomNavItem("appointments", "Appointments", Icons.Default.Event),
+    BottomNavItem("patients", "Patients", Icons.Default.People),
+    BottomNavItem("settings", "Settings", Icons.Default.Settings)
 )
 
 @Composable
@@ -59,6 +68,15 @@ fun SugamApp(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    val appointmentViewModel: AppointmentViewModel = viewModel(
+        factory = AppointmentViewModelFactory(
+            appointmentRepository,
+            patientRepository,
+            physioRepository,
+            clinicSettingsRepository
+        )
+    )
+
     Scaffold(
         bottomBar = {
             NavigationBar {
@@ -69,7 +87,7 @@ fun SugamApp(
                             navController.navigate(item.route)
                         },
                         icon = {
-                            Text(item.label.take(1))
+                            Icon(item.icon, contentDescription = item.label)
                         },
                         label = {
                             Text(item.label)
@@ -95,23 +113,34 @@ fun SugamApp(
                         navController.navigate("physios")
                     },
                     onCreateAppointment = {
-                        navController.navigate("appointments")
+                        navController.navigate("add_appointment")
                     }
                 )
             }
 
             composable("appointments") {
-                val appointmentViewModel: AppointmentViewModel = viewModel(
-                    factory = AppointmentViewModelFactory(
-                        appointmentRepository,
-                        patientRepository,
-                        physioRepository,
-                        clinicSettingsRepository
-                    )
-                )
-
                 AppointmentsScreen(
-                    viewModel = appointmentViewModel
+                    viewModel = appointmentViewModel,
+                    onAddAppointment = {
+                        appointmentViewModel.resetForm()
+                        navController.navigate("add_appointment")
+                    },
+                    onEditAppointment = { appointment ->
+                        appointmentViewModel.startEditingAppointment(appointment)
+                        navController.navigate("add_appointment")
+                    }
+                )
+            }
+
+            composable("add_appointment") {
+                AddAppointmentScreen(
+                    viewModel = appointmentViewModel,
+                    onBack = {
+                        navController.popBackStack()
+                    },
+                    onSaveSuccess = {
+                        navController.popBackStack()
+                    }
                 )
             }
 

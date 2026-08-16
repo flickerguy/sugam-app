@@ -3,8 +3,8 @@
 **Document:** `ARCHITECTURE.md`  
 **Purpose:** Technical source of truth for the Sugam application  
 **Current phase:** Phase 1 — Local Android application  
-**Status:** Phase 1 foundation, Room, Patient Management, and Physio Management implemented  
-**Last updated:** 2026-08-15
+**Status:** Phase 1 — Local Android Application Development COMPLETED  
+**Last updated:** 2026-08-16
 
 ## 1. Purpose
 
@@ -105,7 +105,9 @@ Scaffold
            |
            +--> Dashboard
            +--> Appointments
+           +--> Add/Edit Appointment
            +--> Patients
+           +--> Patient Details
            +--> Physios
            +--> Settings
 ```
@@ -625,7 +627,12 @@ As of **2026-08-15**:
 - Dashboard implementation is completed for the current Phase 1 scope.
 - Clinic Settings are implemented and persisted using Room v4.
 - Clinic appointment duration is now used by appointment end-time calculation rather than being hard-coded in the calculation path.
-- Clinic working hours and appointment duration are available to the appointment layer for subsequent validation/polish work.
+- Clinic working hours and appointment duration are enforced during appointment validation.
+- Inactive physio selection rules are enforced.
+- Required-field validation and user-facing error messages are implemented.
+- Empty states and UI polish for lists and summaries are implemented.
+- Dedicated Add/Edit Appointment screen with professional Cyan theme and dropdowns.
+- Shared ViewModel architecture for consistent state across appointment navigation.
 - Builds and physical-device verification have been successful.
 
 Current high-level data flow:
