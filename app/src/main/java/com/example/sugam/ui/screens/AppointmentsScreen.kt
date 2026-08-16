@@ -184,6 +184,19 @@ fun AppointmentsScreen(
             )
         }
 
+        if (editingAppointmentId != null) {
+            item {
+                androidx.compose.material3.OutlinedButton(
+                    onClick = {
+                        viewModel.cancelEditing()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Cancel Edit")
+                }
+            }
+        }
+
         if (selectedPatientId != null) {
             item {
                 Text(
@@ -309,6 +322,7 @@ fun AppointmentsScreen(
                 }
             }
 
+
             item {
                 Button(
                     onClick = {
@@ -327,19 +341,6 @@ fun AppointmentsScreen(
                             "Save Appointment"
                         }
                     )
-                }
-            }
-
-            if (editingAppointmentId != null) {
-                item {
-                    Button(
-                        onClick = {
-                            viewModel.cancelEditing()
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Cancel Edit")
-                    }
                 }
             }
         }

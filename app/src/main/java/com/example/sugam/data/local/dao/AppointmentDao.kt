@@ -134,9 +134,9 @@ interface AppointmentDao {
         a.endTime,
         a.status,
         a.notes,
-        p.name AS physioName
+        COALESCE(p.name, 'Deleted Physio') AS physioName
     FROM appointments a
-    INNER JOIN physios p
+    LEFT JOIN physios p
         ON a.physioId = p.id
     WHERE a.patientId = :patientId
     ORDER BY a.appointmentDate DESC, a.startTime DESC

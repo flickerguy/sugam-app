@@ -30,17 +30,14 @@ import com.example.sugam.data.local.model.PatientAppointmentHistory
 
 @Composable
 fun PatientScreen(
-    viewModel: PatientViewModel
+    viewModel: PatientViewModel,
+    onNavigateToDetails: (Long) -> Unit
 ) {
     val patients by viewModel.patients.collectAsState(initial = emptyList())
 
     var name by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var age by remember { mutableStateOf("") }
-    val patientAppointments by viewModel.patientAppointments.collectAsState()
-    var selectedPatientId by remember {
-        mutableStateOf<Long?>(null)
-    }
 
     Column(
         modifier = Modifier
@@ -107,58 +104,11 @@ fun PatientScreen(
                 PatientCard(
                     patient = patient,
                     onClick = {
-                        selectedPatientId = patient.id
-                        viewModel.loadPatientAppointments(patient.id)
+                        onNavigateToDetails(patient.id)
                     }
                 )
             }
-
-            if (selectedPatientId != null) {
-                item {
-                    Text(
-                        text = "Appointment History",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
-
-                if (patientAppointments.isEmpty()) {
-                    item {
-                        Text(
-                            text = "No appointments found.",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                } else {
-                    items(patientAppointments) { appointment ->
-                        AppointmentHistoryCard(appointment)
-                    }
-                }
-            }
         }
-
-        if (selectedPatientId != null) {
-            Text(
-                text = "Appointment History",
-                style = MaterialTheme.typography.titleLarge
-            )
-
-            if (patientAppointments.isEmpty()) {
-                Text(
-                    text = "No appointments found.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(patientAppointments) { appointment ->
-                        AppointmentHistoryCard(appointment)
-                    }
-                }
-            }
-        }
-
     }
 }
 
@@ -200,38 +150,3 @@ private fun PatientCard(
     }
 }
 
-@Composable
-private fun AppointmentHistoryCard(
-    appointment: PatientAppointmentHistory
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = "${appointment.appointmentDate}  ${appointment.startTime} - ${appointment.endTime}",
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            Text(
-                text = "Physio: ${appointment.physioName}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-
-            Text(
-                text = "Status: ${appointment.status}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-
-            appointment.notes?.takeIf { it.isNotBlank() }?.let {
-                Text(
-                    text = "Notes: $it",
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-        }
-    }
-}
