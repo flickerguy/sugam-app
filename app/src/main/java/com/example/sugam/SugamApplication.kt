@@ -4,8 +4,10 @@ import android.app.Application
 import androidx.room.Room
 import com.example.sugam.data.local.AppDatabase
 import com.example.sugam.data.local.MIGRATION_3_4
+import com.example.sugam.data.local.MIGRATION_4_5
 import com.example.sugam.data.local.PREPOPULATE_CALLBACK
 import com.example.sugam.data.repository.AppointmentRepository
+import com.example.sugam.data.repository.BillingRepository
 import com.example.sugam.data.repository.ClinicSettingsRepository
 import com.example.sugam.data.repository.PatientRepository
 import com.example.sugam.data.repository.PhysioRepository
@@ -19,7 +21,7 @@ class SugamApplication : Application() {
             "sugam.db"
         )
             .fallbackToDestructiveMigration(true)
-            .addMigrations(MIGRATION_3_4)
+            .addMigrations(MIGRATION_3_4, MIGRATION_4_5)
             .addCallback(PREPOPULATE_CALLBACK)
             .build()
     }
@@ -44,5 +46,9 @@ class SugamApplication : Application() {
 
     val clinicSettingsRepository by lazy {
         ClinicSettingsRepository(database.clinicSettingsDao())
+    }
+
+    val billingRepository: BillingRepository by lazy {
+        BillingRepository(database.invoiceDao())
     }
 }

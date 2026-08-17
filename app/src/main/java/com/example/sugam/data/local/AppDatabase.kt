@@ -13,14 +13,20 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.sugam.data.local.dao.ClinicSettingsDao
 
+import com.example.sugam.data.local.entity.InvoiceEntity
+import com.example.sugam.data.local.entity.InvoiceItemEntity
+import com.example.sugam.data.local.dao.InvoiceDao
+
 @Database(
     entities = [
         AppointmentEntity::class,
         PatientEntity::class,
         PhysioEntity::class,
-        ClinicSettingsEntity::class
+        ClinicSettingsEntity::class,
+        InvoiceEntity::class,
+        InvoiceItemEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 
@@ -32,6 +38,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun physioDao(): PhysioDao
 
     abstract fun clinicSettingsDao(): ClinicSettingsDao
+
+    abstract fun invoiceDao(): InvoiceDao
 }
 
 
@@ -68,6 +76,37 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
                 '09:00',
                 '19:00',
                 30
+            )
+            """.trimIndent()
+        )
+    }
+}
+
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS invoices (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                patientId INTEGER NOT NULL,
+                invoiceDate TEXT NOT NULL,
+                invoiceNumber TEXT NOT NULL,
+                totalAmount REAL NOT NULL,
+                status TEXT NOT NULL
+            )
+            """.trimIndent()
+        )
+        database.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS invoice_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                invoiceId INTEGER NOT NULL,
+                service TEXT NOT NULL,
+                quantity REAL NOT NULL,
+                unitPrice REAL NOT NULL,
+                discount REAL NOT NULL,
+                isPercentageDiscount INTEGER NOT NULL,
+                total REAL NOT NULL
             )
             """.trimIndent()
         )
