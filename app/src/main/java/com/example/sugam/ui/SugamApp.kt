@@ -36,6 +36,11 @@ import com.example.sugam.ui.screens.patient.PatientViewModelFactory
 import com.example.sugam.ui.screens.appointment.AddAppointmentScreen
 import com.example.sugam.ui.screens.appointment.AppointmentViewModel
 import com.example.sugam.ui.screens.appointment.AppointmentViewModelFactory
+import com.example.sugam.ui.screens.billing.AddInvoiceScreen
+import com.example.sugam.ui.screens.billing.BillingDashboardScreen
+import com.example.sugam.ui.screens.billing.BillingHistoryScreen
+import com.example.sugam.ui.screens.billing.BillingViewModel
+import com.example.sugam.ui.screens.billing.BillingViewModelFactory
 import com.example.sugam.ui.screens.home.HomeScreen
 import com.example.sugam.ui.screens.home.HomeViewModel
 import com.example.sugam.ui.screens.home.HomeViewModelFactory
@@ -54,6 +59,8 @@ fun SugamApp(
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
+    val application = LocalContext.current.applicationContext as SugamApplication
 
     val appointmentViewModel: AppointmentViewModel = viewModel(
         factory = AppointmentViewModelFactory(
@@ -79,6 +86,10 @@ fun SugamApp(
         )
     )
 
+    val billingViewModel: BillingViewModel = viewModel(
+        factory = BillingViewModelFactory(application.billingRepository)
+    )
+
     var showQuickActionDialog by remember { mutableStateOf(false) }
 
     if (showQuickActionDialog) {
@@ -92,6 +103,10 @@ fun SugamApp(
             onNewPatient = {
                 showQuickActionDialog = false
                 navController.navigate("add_patient")
+            },
+            onNewInvoice = {
+                showQuickActionDialog = false
+                navController.navigate("billing")
             }
         )
     }
@@ -126,8 +141,8 @@ fun SugamApp(
                         NavigationItem(
                             label = "Billing",
                             icon = Icons.Default.ReceiptLong,
-                            selected = false,
-                            onClick = { /* TODO */ }
+                            selected = currentRoute == "billing",
+                            onClick = { navController.navigate("billing") }
                         )
                         NavigationItem(
                             label = "Profile",
@@ -235,6 +250,45 @@ fun SugamApp(
                 PhysioScreen(physioRepository = physioRepository)
             }
 
+            composable("billing") {
+                BillingDashboardScreen(
+                    viewModel = patientViewModel,
+                    onPatientSelected = { patientId ->
+                        navController.navigate("billing_history/$patientId")
+                    }
+                )
+            }
+
+            composable(
+                route = "billing_history/{patientId}",
+                arguments = listOf(navArgument("patientId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val patientId = backStackEntry.arguments?.getLong("patientId") ?: 0L
+                BillingHistoryScreen(
+                    patientViewModel = patientViewModel,
+                    billingViewModel = billingViewModel,
+                    patientId = patientId,
+                    onBack = { navController.popBackStack() },
+                    onAddInvoice = {
+                        navController.navigate("add_invoice/$patientId")
+                    }
+                )
+            }
+
+            composable(
+                route = "add_invoice/{patientId}",
+                arguments = listOf(navArgument("patientId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val patientId = backStackEntry.arguments?.getLong("patientId") ?: 0L
+                // We could pass patientId to BillingViewModel if needed
+                AddInvoiceScreen(
+                    viewModel = billingViewModel,
+                    patientId = patientId,
+                    onBack = { navController.popBackStack() },
+                    onSaveSuccess = { navController.popBackStack() }
+                )
+            }
+
             composable("settings") {
                 val viewModel: ClinicSettingsViewModel = viewModel(
                     factory = ClinicSettingsViewModelFactory(clinicSettingsRepository)
@@ -250,7 +304,8 @@ fun SugamApp(
 private fun QuickActionDialog(
     onDismiss: () -> Unit,
     onNewAppointment: () -> Unit,
-    onNewPatient: () -> Unit
+    onNewPatient: () -> Unit,
+    onNewInvoice: () -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -319,6 +374,23 @@ private fun QuickActionDialog(
                         ) {
                             Icon(Icons.Default.PersonAdd, contentDescription = null, modifier = Modifier.size(24.dp))
                             Text("New Patient", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    Button(
+                        onClick = onNewInvoice,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(Icons.Default.ReceiptLong, contentDescription = null, modifier = Modifier.size(24.dp))
+                            Text("New Invoice", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                     
